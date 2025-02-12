@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>動物ゲーム</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+    .screen {
+      display: none;
+    }
+    .screen.active {
+      display: block;
+    }
+    .animal-box {
+      width: 200px;
+      height: 200px;
+      margin: auto;
+      position: relative;
+      border: 2px solid #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 100px;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    #ptDisplay {
+      margin: 20px;
+      font-size: 24px;
+    }
+    
+    /* アニメーション定義 */
+    @keyframes moveHorizontal {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-20px); }
+      50% { transform: translateX(20px); }
+      75% { transform: translateX(-20px); }
+      100% { transform: translateX(0); }
+    }
+    
+    @keyframes moveVertical {
+      0% { transform: translateY(0); }
+      25% { transform: translateY(-20px); }
+      50% { transform: translateY(20px); }
+      75% { transform: translateY(-20px); }
+      100% { transform: translateY(0); }
+    }
+    
+    @keyframes shake {
+      0% { transform: translate(0,0); }
+      10% { transform: translate(-5px, -5px); }
+      20% { transform: translate(5px, 5px); }
+      30% { transform: translate(-5px, 5px); }
+      40% { transform: translate(5px, -5px); }
+      50% { transform: translate(-5px, -5px); }
+      60% { transform: translate(5px, 5px); }
+      70% { transform: translate(-5px, 5px); }
+      80% { transform: translate(5px, -5px); }
+      90% { transform: translate(-5px, 5px); }
+      100% { transform: translate(0,0); }
+    }
+    
+    .animate-horizontal {
+      animation: moveHorizontal 0.5s ease-in-out;
+    }
+    
+    .animate-vertical {
+      animation: moveVertical 0.5s ease-in-out;
+    }
+    
+    .animate-shake {
+      animation: shake 0.5s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 動物選択画面 -->
+    <div id="selectScreen" class="screen active">
+      <h2>動物を選んでね！</h2>
+      <button class="animalSelect" data-animal="🐕">🐕</button>
+      <button class="animalSelect" data-animal="🐈">🐈</button>
+      <button class="animalSelect" data-animal="🐇">🐇</button>
+    </div>
+    
+    <!-- ゲーム画面 -->
+    <div id="gameScreen" class="screen">
+      <div class="animal-box" id="animalBox">
+        <span id="animalDisplay"></span>
+      </div>
+      <p id="ptDisplay">ポイント: 0</p>
+      <div id="actionButtons">
+        <button id="feedBtn">ご飯</button>
+        <button id="snackBtn">おかし</button>
+        <button id="petBtn">なでる</button>
+      </div>
+      <button id="restartBtn">リスタート</button>
+    </div>
+  </div>
+  <script>
+    (function(){
+      const selectScreen = document.getElementById('selectScreen');
+      const gameScreen   = document.getElementById('gameScreen');
+      const animalDisplay = document.getElementById('animalDisplay');
+      const ptDisplay     = document.getElementById('ptDisplay');
+      const animalBox     = document.getElementById('animalBox');
+      
+      let currentPt = 0;
+      
+      // ポイント表示の更新
+      function updatePtDisplay() {
+        ptDisplay.textContent = 'ポイント: ' + currentPt;
+      }
+      
+      // 動物選択処理
+      const animalButtons = document.querySelectorAll('.animalSelect');
+      animalButtons.forEach(button => {
+        button.addEventListener('click', function(){
+          const animal = this.getAttribute('data-animal');
+          animalDisplay.textContent = animal;
+          currentPt = 0;
+          updatePtDisplay();
+          selectScreen.classList.remove('active');
+          gameScreen.classList.add('active');
+        });
+      });
+      
+      // 「ご飯」ボタン：左右移動＆ポイント＋2
+      document.getElementById('feedBtn').addEventListener('click', function(){
+        currentPt += 2;
+        updatePtDisplay();
+        // 同じアニメーションを再度発火するため、一度クラスを削除してリフローさせる
+        animalBox.classList.remove('animate-horizontal');
+        void animalBox.offsetWidth; // リフロー
+        animalBox.classList.add('animate-horizontal');
+      });
+      
+      // 「おかし」ボタン：上下移動＆ポイント＋3
+      document.getElementById('snackBtn').addEventListener('click', function(){
+        currentPt += 3;
+        updatePtDisplay();
+        animalBox.classList.remove('animate-vertical');
+        void animalBox.offsetWidth;
+        animalBox.classList.add('animate-vertical');
+      });
+      
+      // 「なでる」ボタン：激しく揺れる
+      document.getElementById('petBtn').addEventListener('click', function(){
+        animalBox.classList.remove('animate-shake');
+        void animalBox.offsetWidth;
+        animalBox.classList.add('animate-shake');
+      });
+      
+      // アニメーション終了後にクラスを削除して次回に備える
+      animalBox.addEventListener('animationend', function(event){
+        if(event.animationName === 'moveHorizontal'){
+          animalBox.classList.remove('animate-horizontal');
+        }
+        if(event.animationName === 'moveVertical'){
+          animalBox.classList.remove('animate-vertical');
+        }
+        if(event.animationName === 'shake'){
+          animalBox.classList.remove('animate-shake');
+        }
+      });
+      
+      // リスタートボタン：選択画面に戻す
+      document.getElementById('restartBtn').addEventListener('click', function(){
+        gameScreen.classList.remove('active');
+        selectScreen.classList.add('active');
+      });
+      
+    })();
+  </script>
+</body>
+</html>
